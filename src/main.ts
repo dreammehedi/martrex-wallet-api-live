@@ -1,34 +1,42 @@
-import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  });
+    // Enable CORS
+    app.enableCors({
+      origin: process.env.CORS_ORIGIN || '*',
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    });
 
-  app.useGlobalPipes(new ValidationPipe());
+    // Enable Global Validation Pipes
+    app.useGlobalPipes(new ValidationPipe());
 
-  // app.useGlobalInterceptors(new LoggingInterceptor());
+    // Swagger API Documentation (only in development mode)
+    if (process.env.NODE_ENV !== 'production') {
+      const config = new DocumentBuilder()
+        .setTitle('Crypto API')
+        .setDescription('Crypto API description')
+        .setVersion('1.0')
+        .addTag('api')
+        .addBearerAuth()
+        .build();
 
-  const config = new DocumentBuilder()
-    .setTitle('Crypto API')
-    .setDescription('Crypto API description')
-    .setVersion('1.0')
-    .addTag('api')
-    .addBearerAuth()
-    .build();
+      const document = SwaggerModule.createDocument(app, config);
+      SwaggerModule.setup('swagger', app, document);
+    }
 
-  const document = SwaggerModule.createDocument(app, config);
-  // SwaggerModule.setup('swagger', app, document);
-
-  const port = 3104;
-  await app.listen(port, () => {
-    console.log(`API started on port ${port}`);
-  });
+    const port = process.env.PORT || 3104;
+    await app.listen(port);
+    console.log(`🚀 API started on port ${port}`);
+  } catch (error) {
+    console.error('❌ Error starting the server:', error);
+    process.exit(1);
+  }
 }
+
 bootstrap();
