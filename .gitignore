@@ -36,4 +36,5 @@ lerna-debug.log*
 !.vscode/extensions.json
 .vercel
 .env
-# .env-backup
+.env-backup
+dist
